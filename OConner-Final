@@ -1,0 +1,247 @@
+const int motorEsquerdo1 = 7;
+const int motorEsquerdo2 = 5;
+const int motorDireito1 = 8;
+const int motorDireito2 = 6;
+const int faroisPin1 = 1; //Painel de LED
+const int faroisPin2 = 2; //Painel de LED
+const int sensorLuzPin = 14; //SENSOR LDR
+#define RED 11 // pino PWM 5 para a cor vermelha
+#define GREEN 9 // pino PWM 9 para a cor verde
+#define BLUE 10 // pino PWM 6 para a cor azul
+char comando;
+float i = 0;
+float j = 0;
+void setup() {
+  pinMode(motorEsquerdo1, OUTPUT);
+  pinMode(motorEsquerdo2, OUTPUT);
+  pinMode(motorDireito1, OUTPUT);
+  pinMode(motorDireito2, OUTPUT);
+  pinMode(faroisPin1,OUTPUT);
+  pinMode(faroisPin2,OUTPUT);
+  pinMode(RED, OUTPUT);
+  pinMode(GREEN, OUTPUT);
+  pinMode(BLUE, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int valorLuz = analogRead(sensorLuzPin);
+  //SENSOR LUZ
+  if(isnan(valorLuz)){
+    Serial.println("Nao foi possivel obter a luminosidade.");
+    analogWrite(faroisPin1,LOW); //Por padrão, luz apagada;
+    analogWrite(faroisPin2,LOW); //Por padrão, luz apagada;
+  } else{
+     if (valorLuz <= 400){ 
+          analogWrite(faroisPin1,HIGH);
+          analogWrite(faroisPin2,HIGH);
+        } else{ 
+          analogWrite(faroisPin1,LOW);
+          analogWrite(faroisPin2,LOW);
+        }
+     Serial.println(valorLuz);
+ }
+  //MOTORES
+  if(Serial.available()){
+    comando = Serial.read();
+    Serial.println(comando);
+      switch(comando){
+       //APRESENTACAO
+        case 'K':
+          efeito_de_cores();
+          break; 
+       //VELOCIDADE
+        case 'A':
+            i = 255;
+            break;
+        case 'B':
+            i = 190;
+            break;
+        case 'C':
+            i = 130;
+            break;
+        case 'E':
+            i = 65;
+            break;
+            
+        // DESLIGA MOTOR
+        case 'S':
+          digitalWrite(motorEsquerdo1, HIGH);
+          digitalWrite(motorDireito1, HIGH);
+          analogWrite(motorEsquerdo2, 0);
+          analogWrite(motorDireito2, 0);
+          delay(100);
+          break;
+        
+        // FREIO
+        case 'N':
+          digitalWrite(motorEsquerdo1, HIGH);
+          digitalWrite(motorDireito1, HIGH);
+          analogWrite(motorEsquerdo2, 0);
+          analogWrite(motorDireito2, 0);
+          delay(100);
+          break;
+
+        
+        // PARA FRENTE
+        case 'U':
+            digitalWrite(motorEsquerdo1, LOW);
+            digitalWrite(motorDireito1, LOW);
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            analogWrite(motorDireito2, i);//VELOCIDADE
+            delay(100);
+          break;
+      
+        // PARA TRAZ(RÉ)
+        case 'D':
+            digitalWrite(motorEsquerdo1, HIGH);
+            digitalWrite(motorDireito1, HIGH);
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            analogWrite(motorDireito2, i);//VELOCIDADE
+            delay(100);
+          break;
+        
+        // PARA DIREITA
+        case 'R':
+            digitalWrite(motorEsquerdo1, LOW);
+            digitalWrite(motorDireito1, LOW);
+            analogWrite(motorEsquerdo2, i);
+            analogWrite(motorDireito2, 0);
+            delay(100);
+          break;
+        
+        // PARA DIREIRA E FRENTE, DIAGONAL
+        case 'W':
+            digitalWrite(motorEsquerdo1, LOW);
+            digitalWrite(motorDireito1, LOW);
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            j = (i/2);//METADE DA VELOCIDADE
+            analogWrite(motorDireito2, j);//VELOCIDADE
+            delay(100);
+          break; 
+          
+        // PARA DIREITA E  TRAZ(RÉ), DIAGONAL
+        case 'X':
+            digitalWrite(motorEsquerdo1, HIGH);
+            digitalWrite(motorDireito1, HIGH);
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            j = (i/2);//METADE DA VELOCIDADE
+            analogWrite(motorDireito2, j);//VELOCIDADE
+            delay(100);
+          break;
+          
+        // GIRAR PARA DIREITA, OBS: IRA GIRAR EM O PROPRIO EIXO
+        case 'O':
+            digitalWrite(motorEsquerdo1, LOW);
+            digitalWrite(motorDireito1, HIGH);
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            analogWrite(motorDireito2, i);//VELOCIDADE
+            delay(100);
+          break;
+        
+        // PARA ESQUERDA
+        case 'L':
+            digitalWrite(motorEsquerdo1, LOW);
+            digitalWrite(motorDireito1, LOW);
+            analogWrite(motorEsquerdo2, 0);//VELOCIDADE
+            analogWrite(motorDireito2, i);//VELOCIDADE
+            delay(100);
+          break;
+          
+        // PARA ESQUERDA E FRENTE, DIAGONAL
+        case 'Z':
+            digitalWrite(motorEsquerdo1, LOW);
+            digitalWrite(motorDireito1, LOW);
+            analogWrite(motorDireito2, i);//VELOCIDADE
+            j = (i/2);//METADE DA VELOCIDADE
+            analogWrite(motorEsquerdo2, j);//VELOCIDADE
+            delay(100);
+          break;
+          
+        // PARA ESQUERDA E TRAZ(RÉ), DIAGONAL
+        case 'Y':
+            digitalWrite(motorEsquerdo1, HIGH);
+            digitalWrite(motorDireito1, HIGH);
+            analogWrite(motorDireito2, i);//VELOCIDADE
+            j = (i/2);//METADE DA VELOCIDADE
+            analogWrite(motorEsquerdo2, j);//VELOCIDADE
+            delay(100);
+          break;
+        
+        // GIRAR PARA ESQUERDA, OBS:IRA GIRAR EM O PROPRIO EIXO  
+        case 'I':
+            digitalWrite(motorEsquerdo1, HIGH);
+            digitalWrite(motorDireito1, LOW);
+            analogWrite(motorEsquerdo1, i);//VELOCIDADE
+            analogWrite(motorDireito1, i);//VELOCIDADE
+            delay(100);
+          break;
+      }
+  }
+  analogWrite(RED, 255);
+  analogWrite(GREEN, 0);
+  analogWrite(BLUE,0);
+  delay(50);
+  analogWrite(RED, 0);
+  analogWrite(GREEN, 0);
+  analogWrite(BLUE,0);
+  delay(50);
+  analogWrite(RED, 255);
+  analogWrite(GREEN, 0);
+  analogWrite(BLUE,0);
+  delay(50);
+  analogWrite(RED, 0);
+  analogWrite(GREEN, 0);
+  analogWrite(BLUE,0);
+  delay(50);
+  analogWrite(RED, 255);
+  analogWrite(GREEN, 0);
+  analogWrite(BLUE,0);
+  delay(50);
+  analogWrite(RED, 0);
+  analogWrite(GREEN, 0);
+  analogWrite(BLUE,0);
+  delay(50);
+}
+void efeito_de_cores(){
+  // Declara as variáveis dos loops
+  int r, g, b;
+  
+  // Fade do azul (ja estava aceso) até o violeta, adicionando o vermelho
+  for(r = 0; r <= 255; r++){
+    analogWrite(RED, r);
+    delay(10);
+  }
+  
+  // Fade do violeta até o vermelho, removendo o azul
+  for(b = 255; b >= 0; b--){
+    analogWrite(BLUE, b);
+    delay(10);
+  }
+  
+  // Fade do vermelho até o amarelo, adicionando o verde
+  for(g = 0; g <= 255; g++){
+    analogWrite(GREEN, g);
+    delay(10);
+  }
+  
+  // Fade do amarelo até o verde, removendo o vermelho
+  for(r = 255; r >= 0; r--){
+    analogWrite(RED, r);
+    delay(10);
+  }
+  
+  // Fade do verde até o turquesa, adicionando o azul
+  for(b = 0; b <= 255; b++){
+    analogWrite(BLUE, b);
+    delay(10);
+  }
+  
+  // Fade do turquesa até o azul, removendo o verde
+  for(g = 255; g >= 0; g--){
+    analogWrite(GREEN, g);
+    delay(10);
+  }
+  
+  // Em seguida o loop continua, com o azul aceso
+}
