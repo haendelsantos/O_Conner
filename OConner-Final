@@ -1,3 +1,14 @@
+#include <DHT.h> 
+#define DHTPIN A15 // pino que estamos conectado
+#define DHTTYPE DHT11 // DHT 11
+ 
+// Conecte pino 1 do sensor (esquerda) ao +5V
+// Conecte pino 2 do sensor ao pino de dados definido em seu Arduino
+// Conecte pino 4 do sensor ao GND
+// Conecte o resistor de 10K entre pin 2 (dados) 
+// e ao pino 1 (VCC) do sensor
+DHT dht(DHTPIN, DHTTYPE);
+
 const int motorEsquerdo1 = 7;
 const int motorEsquerdo2 = 5;
 const int motorDireito1 = 8;
@@ -5,12 +16,17 @@ const int motorDireito2 = 6;
 const int faroisPin1 = 1; //Painel de LED
 const int faroisPin2 = 2; //Painel de LED
 const int sensorLuzPin = 14; //SENSOR LDR
+const float Temp = 13;
 #define RED 11 // pino PWM 5 para a cor vermelha
 #define GREEN 9 // pino PWM 9 para a cor verde
 #define BLUE 10 // pino PWM 6 para a cor azul
 char comando;
 float i = 0;
 float j = 0;
+float h;
+float t;
+float temp;
+int contador = 0;
 void setup() {
   pinMode(motorEsquerdo1, OUTPUT);
   pinMode(motorEsquerdo2, OUTPUT);
@@ -21,25 +37,45 @@ void setup() {
   pinMode(RED, OUTPUT);
   pinMode(GREEN, OUTPUT);
   pinMode(BLUE, OUTPUT);
+  pinMode(Temp,INPUT);
+  dht.begin();
   Serial.begin(9600);
 }
 
 void loop() {
   int valorLuz = analogRead(sensorLuzPin);
+  h = dht.readHumidity();
+  t = dht.readTemperature();
+  // testa se retorno é valido, caso contrário algo está errado.
+  if (isnan(t) || isnan(h)) 
+  {
+    Serial.println("Failed to read from DHT");
+  } 
+  else 
+  {
+    Serial.print("Umidade(%): ");
+    Serial.print(h);
+    Serial.print(" Temperatura(%): ");
+    Serial.print(t);
+  }
+  Serial.print(" Lum(%):");
+  Serial.println((valorLuz*100)/1000);
+    
   //SENSOR LUZ
   if(isnan(valorLuz)){
     Serial.println("Nao foi possivel obter a luminosidade.");
-    analogWrite(faroisPin1,LOW); //Por padrão, luz apagada;
-    analogWrite(faroisPin2,LOW); //Por padrão, luz apagada;
   } else{
-     if (valorLuz <= 400){ 
-          analogWrite(faroisPin1,HIGH);
-          analogWrite(faroisPin2,HIGH);
+     if (valorLuz <= 200){ 
+          analogWrite(RED, 255);
+          analogWrite(GREEN, 255);
+          analogWrite(BLUE,255);
+          delay(50);
         } else{ 
-          analogWrite(faroisPin1,LOW);
-          analogWrite(faroisPin2,LOW);
+          analogWrite(RED, 0);
+          analogWrite(GREEN, 0);
+          analogWrite(BLUE,0);
+          delay(50);
         }
-     Serial.println(valorLuz);
  }
   //MOTORES
   if(Serial.available()){
@@ -58,11 +94,9 @@ void loop() {
             i = 190;
             break;
         case 'C':
-            i = 130;
+            i = 120;
             break;
-        case 'E':
-            i = 65;
-            break;
+            
             
         // DESLIGA MOTOR
         case 'S':
@@ -105,8 +139,8 @@ void loop() {
         case 'R':
             digitalWrite(motorEsquerdo1, LOW);
             digitalWrite(motorDireito1, LOW);
-            analogWrite(motorEsquerdo2, i);
-            analogWrite(motorDireito2, 0);
+            analogWrite(motorEsquerdo2, 0);
+            analogWrite(motorDireito2, i);
             delay(100);
           break;
         
@@ -114,9 +148,9 @@ void loop() {
         case 'W':
             digitalWrite(motorEsquerdo1, LOW);
             digitalWrite(motorDireito1, LOW);
-            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            analogWrite(motorDireito2, i);//VELOCIDADE
             j = (i/2);//METADE DA VELOCIDADE
-            analogWrite(motorDireito2, j);//VELOCIDADE
+            analogWrite(motorEsquerdo2, j);//VELOCIDADE
             delay(100);
           break; 
           
@@ -124,16 +158,16 @@ void loop() {
         case 'X':
             digitalWrite(motorEsquerdo1, HIGH);
             digitalWrite(motorDireito1, HIGH);
-            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            analogWrite(motorDireito2, i);//VELOCIDADE
             j = (i/2);//METADE DA VELOCIDADE
-            analogWrite(motorDireito2, j);//VELOCIDADE
+            analogWrite(motorEsquerdo2, j);//VELOCIDADE
             delay(100);
           break;
           
         // GIRAR PARA DIREITA, OBS: IRA GIRAR EM O PROPRIO EIXO
         case 'O':
-            digitalWrite(motorEsquerdo1, LOW);
-            digitalWrite(motorDireito1, HIGH);
+            digitalWrite(motorEsquerdo1, HIGH);
+            digitalWrite(motorDireito1, LOW);
             analogWrite(motorEsquerdo2, i);//VELOCIDADE
             analogWrite(motorDireito2, i);//VELOCIDADE
             delay(100);
@@ -143,8 +177,8 @@ void loop() {
         case 'L':
             digitalWrite(motorEsquerdo1, LOW);
             digitalWrite(motorDireito1, LOW);
-            analogWrite(motorEsquerdo2, 0);//VELOCIDADE
-            analogWrite(motorDireito2, i);//VELOCIDADE
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            analogWrite(motorDireito2, 0);//VELOCIDADE
             delay(100);
           break;
           
@@ -152,9 +186,9 @@ void loop() {
         case 'Z':
             digitalWrite(motorEsquerdo1, LOW);
             digitalWrite(motorDireito1, LOW);
-            analogWrite(motorDireito2, i);//VELOCIDADE
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
             j = (i/2);//METADE DA VELOCIDADE
-            analogWrite(motorEsquerdo2, j);//VELOCIDADE
+            analogWrite(motorDireito2, j);//VELOCIDADE
             delay(100);
           break;
           
@@ -162,46 +196,22 @@ void loop() {
         case 'Y':
             digitalWrite(motorEsquerdo1, HIGH);
             digitalWrite(motorDireito1, HIGH);
-            analogWrite(motorDireito2, i);//VELOCIDADE
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
             j = (i/2);//METADE DA VELOCIDADE
-            analogWrite(motorEsquerdo2, j);//VELOCIDADE
+            analogWrite(motorDireito2, j);//VELOCIDADE
             delay(100);
           break;
         
         // GIRAR PARA ESQUERDA, OBS:IRA GIRAR EM O PROPRIO EIXO  
-        case 'I':
-            digitalWrite(motorEsquerdo1, HIGH);
-            digitalWrite(motorDireito1, LOW);
-            analogWrite(motorEsquerdo1, i);//VELOCIDADE
-            analogWrite(motorDireito1, i);//VELOCIDADE
+        case 'T':
+            digitalWrite(motorEsquerdo1, LOW);
+            digitalWrite(motorDireito1, HIGH);
+            analogWrite(motorEsquerdo2, i);//VELOCIDADE
+            analogWrite(motorDireito2, i);//VELOCIDADE
             delay(100);
           break;
       }
   }
-  analogWrite(RED, 255);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE,0);
-  delay(50);
-  analogWrite(RED, 0);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE,0);
-  delay(50);
-  analogWrite(RED, 255);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE,0);
-  delay(50);
-  analogWrite(RED, 0);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE,0);
-  delay(50);
-  analogWrite(RED, 255);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE,0);
-  delay(50);
-  analogWrite(RED, 0);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE,0);
-  delay(50);
 }
 void efeito_de_cores(){
   // Declara as variáveis dos loops
